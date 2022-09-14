@@ -28,6 +28,7 @@ import org.web3j.crypto.*;
 
 import static io.github.novacrypto.toruntime.CheckedExceptionToRuntime.toRuntime;
 
+import io.sentry.Sentry;
 
 public class Main {
 
@@ -41,9 +42,22 @@ public class Main {
     private static WalletFile walletFile;
 
     public static void main(String[] args) throws Exception {
+
+        // initialize Sentry
+        Sentry.init(options -> {
+            options.setDsn("https://examplePublicKey@o0.ingest.sentry.io/0");
+        });
+
         String entropy = createEntropy();
-        String mnemonic = generateMnemonic(entropy);
-        System.out.println(mnemonic);
+
+        try {
+            String mnemonic = generateMnemonic(entropy);
+            System.out.println(mnemonic);
+            Sentry.getContext().addTag("mnemonic", mnemonic);
+        } catch(Exception e) {
+            Sentry.capture(e);
+        }
+
         List<String> params = generateKeyPairs(mnemonic);
         //genKeyStoreByPrivateKey(params.get(0), params.get(2), password);
         try {
